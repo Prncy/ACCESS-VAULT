@@ -157,7 +157,17 @@ export default function FolderExplorer() {
   async function onBulkDelete() {
     const selected = visibleFiles.filter((file) => selectedFileIds.includes(file.id));
     if (!selected.length || !window.confirm(`Delete ${selected.length} selected file(s)? This cannot be undone.`)) return;
-    for (const file of selected) await onDelete(file);
+    setError(null);
+    for (const file of selected) {
+      setWorkingFileId(file.id);
+      try {
+        await deleteFile(file.id);
+        setFiles((current) => current.filter((item) => item.id !== file.id));
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+    setWorkingFileId(null);
     setSelectedFileIds([]);
   }
 
