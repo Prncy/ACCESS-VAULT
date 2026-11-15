@@ -288,3 +288,29 @@ h1, h2 { line-height: 1.2; margin: 0; }
   .explorer-sort { font-size: .7rem; }
   .explorer-sort select { max-width: 115px; }
 }
+
+
+/* Compact, icon-led explorer controls */
+.explorer-icon-button { width: 38px; height: 38px; display: inline-grid; place-items: center; flex: 0 0 auto; border: 1px solid #344760; border-radius: 9px; background: #1b2b3f; color: #b8d2f5; font: inherit; font-size: 1.15rem; line-height: 1; cursor: pointer; text-decoration: none; }
+.explorer-icon-button:hover:not(:disabled) { background: #294365; border-color: #5279aa; color: #fff; }
+.explorer-icon-button:disabled { opacity: .5; cursor: not-allowed; }
+.explorer-icon-button.is-danger { color: #e69b9b; }
+.explorer-upload-trigger { cursor: pointer; }
+.explorer-upload-trigger input { display: none; }
+.explorer-heading__actions { align-items: center; }
+.explorer-folder-card__share { width: 34px; height: 34px; font-size: 1rem; }
+.explorer-file-card__actions { align-items: center; }
+.explorer-file-card__actions .explorer-icon-button { width: 34px; height: 34px; }
+.explorer-file-select { width: 16px; height: 16px; accent-color: #4387ff; flex: 0 0 auto; }
+.explorer-selection-bar { display: flex; align-items: center; gap: .55rem; margin-top: 1rem; padding: .65rem .8rem; border: 1px solid #355477; border-radius: 10px; background: #172a41; color: #d5e5fa; font-size: .8rem; }
+.explorer-selection-bar span { margin-right: auto; }
+.explorer-item-menu { position: relative; }
+.explorer-item-menu summary { list-style: none; }
+.explorer-item-menu summary::-webkit-details-marker { display: none; }
+.explorer-item-menu__panel { position: absolute; z-index: 5; right: 0; top: calc(100% + 5px); min-width: 130px; display: grid; padding: .3rem; border: 1px solid #344760; border-radius: 8px; background: #172230; box-shadow: 0 12px 28px rgba(0,0,0,.35); }
+.explorer-item-menu__panel button { padding: .55rem .65rem; border: 0; border-radius: 5px; background: transparent; color: #dce7f6; text-align: left; font: inherit; font-size: .78rem; cursor: pointer; }
+.explorer-item-menu__panel button:hover { background: #263d5d; }
+.explorer-item-menu__panel button.is-danger { color: #e69b9b; }
+.explorer-inline-empty { background: transparent; }
+.explorer-folder-card__share { color: #9fc4fa; }
+@media (max-width: 520px) { .explorer-heading__actions .explorer-icon-button { flex: 0 0 38px; } }
