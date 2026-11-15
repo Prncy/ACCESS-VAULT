@@ -100,6 +100,11 @@ export default function FolderExplorer() {
   }
 
   async function onPickFiles(event) {
+    if (currentId === vaultId) {
+      event.target.value = '';
+      setError('Open or create a folder before uploading files.');
+      return;
+    }
     const picked = Array.from(event.target.files ?? []);
     event.target.value = '';
     setError(null);
