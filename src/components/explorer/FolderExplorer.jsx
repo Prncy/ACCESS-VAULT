@@ -24,7 +24,8 @@ export default function FolderExplorer() {
   const [sharing, setSharing] = useState(null);
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
-  const [viewMode, setViewMode] = useState('grid');
+  const [viewMode, setViewMode] = useState('list');
+  const [selectedFileIds, setSelectedFileIds] = useState([]);
 
   const load = useCallback(async () => {
     setError(null);
@@ -45,11 +46,14 @@ export default function FolderExplorer() {
     if (!currentId || folders === null) return undefined;
     let cancelled = false;
     setFiles([]);
+    setSelectedFileIds([]);
+    // The root vault is a navigation/container view only. Files can exist only inside subfolders.
+    if (currentId === vaultId) return () => { cancelled = true; };
     listFiles(currentId)
       .then((list) => !cancelled && setFiles(list))
       .catch((err) => !cancelled && setError(err.message));
     return () => { cancelled = true; };
-  }, [currentId, folders]);
+  }, [currentId, folders, vaultId]);
 
   const byId = useMemo(() => new Map((folders ?? []).map((folder) => [folder.id, folder])), [folders]);
   const children = useMemo(() => (folders ?? [])
@@ -137,11 +141,24 @@ export default function FolderExplorer() {
     try {
       await deleteFile(file.id);
       setFiles((current) => current.filter((item) => item.id !== file.id));
+      setSelectedFileIds((current) => current.filter((id) => id !== file.id));
     } catch (err) {
       setError(err.message);
     } finally {
       setWorkingFileId(null);
     }
+  }
+
+  async function onBulkDownload() {
+    const selected = visibleFiles.filter((file) => selectedFileIds.includes(file.id));
+    for (const file of selected) await onDownload(file);
+  }
+
+  async function onBulkDelete() {
+    const selected = visibleFiles.filter((file) => selectedFileIds.includes(file.id));
+    if (!selected.length || !window.confirm(`Delete ${selected.length} selected file(s)? This cannot be undone.`)) return;
+    for (const file of selected) await onDelete(file);
+    setSelectedFileIds([]);
   }
 
   function renderFolderTree(parentId, depth = 0) {
@@ -200,12 +217,15 @@ export default function FolderExplorer() {
           </div>
           <div className="explorer-heading__actions">
             {!atRoot && (
-              <label className="btn btn--primary explorer__upload-button">
-                <input type="file" multiple hidden onChange={onPickFiles} disabled={progress !== null} aria-label="Upload files to this folder" />
-                <span aria-hidden="true">↑</span> Upload files
-              </label>
+              <>
+                <label className="explorer-icon-button explorer-upload-trigger" title="Upload files">
+                  <input type="file" multiple hidden onChange={onPickFiles} disabled={progress !== null} aria-label="Upload files to this folder" />
+                  <span aria-hidden="true">↑</span>
+                </label>
+                <button type="button" className="explorer-icon-button" title="Share this folder" aria-label={`Share ${byId.get(currentId)?.name ?? 'this folder'}`} onClick={() => setSharing(byId.get(currentId))}>↗</button>
+              </>
             )}
-            <Button onClick={() => setShowCreate((value) => !value)}><span aria-hidden="true">＋</span> New folder</Button>
+            <button type="button" className="explorer-icon-button" title="New folder" aria-label="Create a new folder" onClick={() => setShowCreate((value) => !value)}>＋</button>
           </div>
         </div>
 
@@ -258,7 +278,7 @@ export default function FolderExplorer() {
                   <span className="explorer-folder-card__name">{folder.name}</span>
                   <span className="explorer-folder-card__meta">Encrypted folder</span>
                 </button>
-                <button type="button" className="explorer-folder-card__share" onClick={() => setSharing(folder)} aria-label={`Share ${folder.name}`}>Share</button>
+                <button type="button" className="explorer-icon-button explorer-folder-card__share" title={`Share ${folder.name}`} onClick={() => setSharing(folder)} aria-label={`Share ${folder.name}`}>↗</button>
               </article>
             ))}
           </div>
@@ -266,6 +286,7 @@ export default function FolderExplorer() {
           <p className="explorer-inline-empty">{query ? 'No folders match your search.' : 'No folders in this location yet.'}</p>
         )}
 
+        {!atRoot && <>
         <div className="explorer-section-heading explorer-section-heading--files">
           <h2>Files</h2><span>{visibleFiles.length}</span>
         </div>
@@ -274,29 +295,23 @@ export default function FolderExplorer() {
             {visibleFiles.map((file) => (
               <article className="explorer-file-card" key={file.id}>
                 <div className="explorer-file-card__identity">
+                  <input className="explorer-file-select" type="checkbox" checked={selectedFileIds.includes(file.id)} onChange={(event) => setSelectedFileIds((current) => event.target.checked ? [...current, file.id] : current.filter((id) => id !== file.id))} aria-label={`Select ${file.name}`} />
                   <span className="explorer-file-card__icon" aria-hidden="true">▤</span>
                   <span className="explorer-file-card__details"><strong>{file.name}</strong><small>{formatSize(file.size)} · Encrypted</small></span>
                 </div>
                 <div className="explorer-file-card__actions">
-                  <button type="button" disabled={workingFileId === file.id} onClick={() => onDownload(file)}>↓ Download</button>
-                  <button type="button" className="is-danger" disabled={workingFileId === file.id} onClick={() => onDelete(file)}>Delete</button>
+                  <button type="button" className="explorer-icon-button" title="Download" aria-label={`Download ${file.name}`} disabled={workingFileId === file.id} onClick={() => onDownload(file)}>↓</button>
+                  <button type="button" className="explorer-icon-button is-danger" title="Delete" aria-label={`Delete ${file.name}`} disabled={workingFileId === file.id} onClick={() => onDelete(file)}>⌫</button>
+                  <details className="explorer-item-menu"><summary className="explorer-icon-button" aria-label={`More actions for ${file.name}`}>⋮</summary><div className="explorer-item-menu__panel"><button type="button" onClick={() => onDownload(file)}>Download</button><button type="button" className="is-danger" onClick={() => onDelete(file)}>Delete</button></div></details>
                 </div>
               </article>
             ))}
           </div>
         ) : (
-          <div className="explorer-empty-state">
-            <span aria-hidden="true">▤</span>
-            <strong>{query ? 'No files found' : 'No files here yet'}</strong>
-            <p>{atRoot ? 'Open a folder to upload files. This keeps your vault neatly organised.' : 'Upload a file to this folder. It will be encrypted on your device first.'}</p>
-            {!atRoot && (
-              <label className="btn btn--primary explorer__upload-button">
-                <input type="file" multiple hidden onChange={onPickFiles} disabled={progress !== null} aria-label="Upload files to this folder" />
-                <span aria-hidden="true">↑</span> Upload your first file
-              </label>
-            )}
-          </div>
+          <p className="explorer-inline-empty">{query ? 'No files match your search.' : 'This folder is empty.'}</p>
         )}
+        {selectedFileIds.length > 0 && <div className="explorer-selection-bar"><span>{selectedFileIds.length} selected</span><button type="button" className="explorer-icon-button" title="Download selected" aria-label="Download selected files" onClick={onBulkDownload}>↓</button><button type="button" className="explorer-icon-button is-danger" title="Delete selected" aria-label="Delete selected files" onClick={onBulkDelete}>⌫</button><button type="button" className="explorer-icon-button" title="Clear selection" aria-label="Clear selection" onClick={() => setSelectedFileIds([])}>×</button></div>}
+        </>}
 
         {sharing && <SharePanel folder={sharing} onClose={() => setSharing(null)} />}
         <p className="explorer-footer"><span aria-hidden="true">🔒</span> End-to-end encrypted · Only you hold the keys</p>
