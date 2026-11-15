@@ -10,7 +10,7 @@
 // The browser picks the fileId because it is part of every chunk's AAD.
 
 import { getBackend } from "./authFlow.js";
-import { getFolderKey } from "./folderFlow.js";
+import { getFolderKey, getVaultFolderId } from "./folderFlow.js";
 import { ApiError } from "./apiClient.js";
 import { ERROR_CODES } from "./contract.js";
 import {
@@ -116,6 +116,10 @@ export async function uploadFile(
     );
   }
 
+  const vaultId = await getVaultFolderId();
+  if (folderId === vaultId) {
+    throw new ApiError(ERROR_CODES.INVALID_REQUEST, "Open or create a folder before uploading files.", 400);
+  }
   const backend = getBackend();
   const folderKey = await getFolderKey(folderId);
 
