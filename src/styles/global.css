@@ -169,7 +169,8 @@ h1, h2 { line-height: 1.2; margin: 0; }
 .vault-nav__label, .explorer-sidebar__label { color: #73839a; font-size: .68rem; font-weight: 800; letter-spacing: .13em; margin: .2rem .7rem .65rem; }
 .vault-nav > button { display: flex; align-items: center; gap: .75rem; padding: .75rem .85rem; border: 0; border-radius: 9px; color: #aebbd0; background: transparent; text-align: left; font: inherit; cursor: pointer; }
 .vault-nav > button:hover, .vault-nav > button.is-active { background: #1c2b40; color: #fff; }
-.vault-nav > button.is-active { box-shadow: inset 3px 0 #4387ff; }
+.vault-nav > button.is-active { box-shadow: none; }
+.vault-nav > button:focus-visible { outline: 2px solid #526176; outline-offset: 2px; }
 .vault-nav__bottom { margin-top: auto; padding: 1rem .8rem; display: grid; gap: .45rem; color: #c8d6e9; border: 1px solid #2a3a50; background: #192536; border-radius: 12px; font-size: .82rem; }
 .vault-nav__bottom > span { font-size: 1.2rem; }
 .vault-nav__bottom small { color: #8798af; line-height: 1.5; }
