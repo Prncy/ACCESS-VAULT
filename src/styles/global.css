@@ -325,3 +325,66 @@ h1, h2 { line-height: 1.2; margin: 0; }
 .explorer-download-status__track { height: 7px; overflow: hidden; border-radius: 999px; background: #2a394c; }
 .explorer-download-status__track span { display: block; height: 100%; border-radius: inherit; background: #8ca6c8; transition: width .2s ease; }
 .explorer-download-status small { color: #8e9fb5; font-size: .72rem; }
+
+
+/* Compact workspace switcher and denser file-manager layout */
+.vault__workspace { display: block; min-height: calc(100vh - 72px); }
+.vault__main { padding: clamp(.8rem, 2vw, 1.5rem) clamp(.8rem, 2.5vw, 2rem); }
+.vault-workspace-switcher-row { display: flex; align-items: center; margin: 0 auto .9rem; max-width: 1440px; }
+.vault-workspace-switcher { position: relative; z-index: 8; }
+.vault-workspace-switcher summary { min-width: 176px; display: inline-flex; align-items: center; gap: .6rem; padding: .55rem .75rem; border: 1px solid #344760; border-radius: 8px; background: #172333; color: #e5edf8; font-size: .84rem; font-weight: 600; cursor: pointer; list-style: none; }
+.vault-workspace-switcher summary::-webkit-details-marker { display: none; }
+.vault-workspace-switcher__icon { color: #9fc4fa; }
+.vault-workspace-switcher__chevron { margin-left: auto; color: #8e9db2; font-size: 1rem; }
+.vault-workspace-switcher[open] summary { border-color: #5279aa; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.vault-workspace-switcher__menu { position: absolute; top: calc(100% - 1px); left: 0; min-width: 100%; display: grid; padding: .25rem; border: 1px solid #344760; border-radius: 0 0 8px 8px; background: #172333; box-shadow: 0 12px 24px rgba(0,0,0,.28); }
+.vault-workspace-switcher__menu button { display: flex; align-items: center; gap: .6rem; padding: .6rem .55rem; border: 0; border-radius: 5px; background: transparent; color: #aebbd0; text-align: left; white-space: nowrap; font: inherit; font-size: .8rem; cursor: pointer; }
+.vault-workspace-switcher__menu button:hover, .vault-workspace-switcher__menu button.is-active { background: #20334b; color: #f2f6fc; }
+.vault-workspace-switcher__check { margin-left: auto; color: #9fc4fa; }
+.explorer-layout { gap: clamp(.7rem, 1.5vw, 1.25rem); }
+.explorer-heading { align-items: center; margin-bottom: .8rem; }
+.explorer-eyebrow { margin-bottom: .2rem; font-size: .6rem; }
+.explorer__title { font-size: clamp(1.25rem, 2vw, 1.65rem); margin-bottom: .2rem; }
+.explorer__crumbs { margin-top: .15rem; font-size: .74rem; }
+.explorer-toolbar { padding: .55rem 0; margin-bottom: .95rem; gap: .7rem; }
+.explorer-section-heading { margin-bottom: .5rem; }
+.explorer-section-heading--files { margin-top: 1.25rem; }
+.explorer-items { gap: .5rem; }
+.explorer-folder-card { padding: .58rem .7rem; }
+.explorer-items--list .explorer-folder-card { padding: .45rem .7rem; }
+.explorer-file-card { padding: .55rem .7rem; }
+.explorer-empty-state { padding: 1.35rem .8rem; gap: .4rem; }
+.explorer-sidebar__note { margin-top: 1.2rem; }
+@media (max-width: 760px) {
+  .vault__main { padding: .75rem .8rem; }
+  .vault-workspace-switcher-row { margin-bottom: .65rem; }
+  .vault-workspace-switcher summary { min-width: 158px; padding: .48rem .65rem; }
+  .explorer-layout { gap: .65rem; }
+  .explorer-sidebar { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; padding: 0 0 .45rem; gap: .15rem; }
+  .explorer-tree__item { flex: 0 0 auto; max-width: 190px; padding: .35rem .48rem; font-size: .76rem; }
+  .explorer-tree__root { margin: 0; }
+  .explorer-heading { flex-direction: row; align-items: center; margin-bottom: .55rem; }
+  .explorer-eyebrow { display: none; }
+  .explorer__title { font-size: 1.25rem; }
+  .explorer-heading__actions { width: auto; gap: .35rem; }
+  .explorer-toolbar { flex-direction: row; align-items: center; flex-wrap: wrap; margin-bottom: .8rem; }
+  .explorer-search { flex: 1 1 100%; max-width: none; padding: .45rem .65rem; }
+  .explorer-toolbar__right { width: 100%; justify-content: space-between; }
+  .explorer-section-heading h2 { font-size: .88rem; }
+  .explorer-items { grid-template-columns: 1fr; }
+  .explorer-file-card { flex-direction: row; align-items: center; padding: .5rem .6rem; }
+  .explorer-file-card__actions { width: auto; justify-content: flex-end; }
+}
+@media (max-width: 520px) {
+  .vault--workspace .vault__bar { min-height: 60px; padding: .65rem .8rem; }
+  .vault__topbar-right { width: auto; }
+  .vault__user { gap: .55rem; }
+  .vault__avatar { width: 30px; height: 30px; }
+  .vault__main { padding: .65rem .7rem; }
+  .explorer-heading { gap: .5rem; }
+  .explorer-heading__actions .explorer-icon-button { flex-basis: 34px; width: 34px; height: 34px; }
+  .explorer-file-card__identity { gap: .5rem; }
+  .explorer-file-card__icon { width: 30px; height: 34px; flex-basis: 30px; }
+  .explorer-file-card__details strong { max-width: 45vw; }
+  .explorer-file-card__actions .explorer-icon-button { width: 32px; height: 32px; }
+}

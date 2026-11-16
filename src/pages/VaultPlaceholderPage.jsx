@@ -26,14 +26,24 @@ export default function VaultPlaceholderPage() {
       </header>
 
       <main className="vault__workspace">
-        <aside className="vault-nav" aria-label="Main navigation">
-          <p className="vault-nav__label">WORKSPACE</p>
-          <button type="button" className={view === 'mine' ? 'is-active' : ''} onClick={() => setView('mine')}><span aria-hidden="true">▦</span> My vault</button>
-          <button type="button" className={view === 'shared' ? 'is-active' : ''} onClick={() => setView('shared')}><span aria-hidden="true">♧</span> Shared with me</button>
-          <div className="vault-nav__bottom"><span aria-hidden="true">🛡️</span><strong>Zero-knowledge storage</strong><small>Your files are encrypted before upload. The server never sees their contents or names.</small></div>
-        </aside>
-
         <div className="vault__main">
+          <div className="vault-workspace-switcher-row">
+            <details className="vault-workspace-switcher">
+              <summary aria-label="Switch workspace">
+                <span className="vault-workspace-switcher__icon" aria-hidden="true">{view === 'mine' ? '▦' : '♧'}</span>
+                <span>{view === 'mine' ? 'My vault' : 'Shared with me'}</span>
+                <span className="vault-workspace-switcher__chevron" aria-hidden="true">⌄</span>
+              </summary>
+              <div className="vault-workspace-switcher__menu">
+                <button type="button" className={view === 'mine' ? 'is-active' : ''} onClick={(event) => { setView('mine'); event.currentTarget.closest('details')?.removeAttribute('open'); }}>
+                  <span aria-hidden="true">▦</span> My vault {view === 'mine' && <span className="vault-workspace-switcher__check">✓</span>}
+                </button>
+                <button type="button" className={view === 'shared' ? 'is-active' : ''} onClick={(event) => { setView('shared'); event.currentTarget.closest('details')?.removeAttribute('open'); }}>
+                  <span aria-hidden="true">♧</span> Shared with me {view === 'shared' && <span className="vault-workspace-switcher__check">✓</span>}
+                </button>
+              </div>
+            </details>
+          </div>
           {session.justRegistered && <Alert variant="success">Your account is ready. You're signed in.</Alert>}
           {USING_MOCK && (
             <Alert variant="info" title="Mock mode">
