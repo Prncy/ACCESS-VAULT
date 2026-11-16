@@ -140,7 +140,7 @@ export default function FolderExplorer() {
     setError(null);
     try {
       const { name: fileName, blob } = await downloadFile(file.id, currentId, {
-        onProgress: (next) => setDownloadProgress({ name: file.name, ...next }),
+        onProgress: (next) => setDownloadProgress({ name: file.name, ...next, totalBytes: next.totalBytes || file.size }),
       });
       setDownloadProgress((current) => current ? { ...current, stage: 'saving' } : current);
       saveBlob(fileName, blob);
@@ -284,8 +284,8 @@ export default function FolderExplorer() {
                 {downloadProgress.stage === 'downloading' && <strong>{percent}%</strong>}
               </div>
               <div className="explorer-download-status__name">{downloadProgress.name}</div>
-              <div className="explorer-download-status__track" role="progressbar" aria-label={message} aria-valuemin="0" aria-valuemax="100" aria-valuenow={downloadProgress.stage === 'decrypting' || downloadProgress.stage === 'saving' ? 100 : percent}>
-                <span style={{ width: `${downloadProgress.stage === 'decrypting' || downloadProgress.stage === 'saving' ? 100 : percent}%` }} />
+              <div className="explorer-download-status__track" role="progressbar" aria-label={message} aria-valuemin="0" aria-valuemax="100" aria-valuenow={downloadProgress.stage === 'saving' ? 100 : percent}>
+                <span style={{ width: `${downloadProgress.stage === 'saving' ? 100 : percent}%` }} />
               </div>
               <small>{downloadProgress.stage === 'preparing'
                 ? 'Getting the encrypted file and your key ready'
