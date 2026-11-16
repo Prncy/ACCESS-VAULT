@@ -204,8 +204,13 @@ export async function listFiles(folderId) {
  * Downloads, authenticates and decrypts every chunk. Returns { name, blob }.
  * Any chunk that fails its authentication tag aborts the whole download (Chapter 4.4.2.5).
  */
-export async function downloadFile(fileId, folderId) {
+export async function downloadFile(
+  fileId,
+  folderId,
+  { onProgress, parallelChunks = 2 } = {},
+) {
   const backend = getBackend();
+  onProgress?.({ stage: "preparing", bytesDone: 0, totalBytes: 0, chunksDone: 0, totalChunks: 0 });
   const row = await backend.getFile(fileId);
   if (!row)
     throw new ApiError(
@@ -228,23 +233,64 @@ export async function downloadFile(fileId, folderId) {
     );
   }
 
+  const totalChunks = row.chunkCount;
+  const totalBytes = row.size;
+  const concurrency = Math.max(1, Math.min(3, Math.floor(parallelChunks) || 1));
+  const encryptedParts = new Array(totalChunks);
+  let bytesDone = 0;
+  let chunksDone = 0;
+
+  // Fetch a small batch concurrently, then retain the original order for authenticated decryption.
+  for (let start = 0; start < totalChunks; start += concurrency) {
+    const indexes = Array.from(
+      { length: Math.min(concurrency, totalChunks - start) },
+      (_, offset) => start + offset,
+    );
+    const batch = await Promise.all(
+      indexes.map((index) => backend.downloadChunk({ fileId, index })),
+    );
+    batch.forEach((encrypted, offset) => {
+      const index = indexes[offset];
+      encryptedParts[index] = encrypted;
+      bytesDone += Math.min(
+        CHUNK_SIZE,
+        Math.max(0, totalBytes - index * CHUNK_SIZE),
+      );
+      chunksDone += 1;
+      onProgress?.({
+        stage: "downloading",
+        bytesDone: Math.min(bytesDone, totalBytes),
+        totalBytes,
+        chunksDone,
+        totalChunks,
+      });
+    });
+  }
+
   const baseNonce = new Uint8Array(base64ToBuf(row.baseNonce));
   const parts = [];
-  for (let index = 0; index < row.chunkCount; index++) {
-    const encrypted = await backend.downloadChunk({ fileId, index });
+  let decryptedBytes = 0;
+  for (let index = 0; index < totalChunks; index++) {
     try {
-      parts.push(
-        new Uint8Array(
-          await decryptChunk(
-            fileKey,
-            baseNonce,
-            fileId,
-            index,
-            index === row.chunkCount - 1,
-            encrypted,
-          ),
+      const plaintext = new Uint8Array(
+        await decryptChunk(
+          fileKey,
+          baseNonce,
+          fileId,
+          index,
+          index === totalChunks - 1,
+          encryptedParts[index],
         ),
       );
+      parts.push(plaintext);
+      decryptedBytes += plaintext.byteLength;
+      onProgress?.({
+        stage: "decrypting",
+        bytesDone: Math.min(decryptedBytes, totalBytes),
+        totalBytes,
+        chunksDone: index + 1,
+        totalChunks,
+      });
     } catch {
       throw new ApiError(
         ERROR_CODES.UNKNOWN,

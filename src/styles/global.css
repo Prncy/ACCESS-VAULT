@@ -315,3 +315,13 @@ h1, h2 { line-height: 1.2; margin: 0; }
 .explorer-inline-empty { background: transparent; }
 .explorer-folder-card__share { color: #9fc4fa; }
 @media (max-width: 520px) { .explorer-heading__actions .explorer-icon-button { flex: 0 0 38px; } }
+
+
+.explorer-download-status { display: grid; gap: .55rem; padding: .85rem 1rem; margin: 0 0 1rem; border: 1px solid #344760; border-radius: 10px; background: #172333; color: #dce8f7; font-size: .8rem; }
+.explorer-download-status__top, .explorer-download-status__top > span { display: flex; align-items: center; justify-content: space-between; gap: .55rem; }
+.explorer-download-status__top > span { justify-content: flex-start; }
+.explorer-download-status__top .spinner { width: .8rem; height: .8rem; color: #9eb9df; }
+.explorer-download-status__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #aabbd1; }
+.explorer-download-status__track { height: 7px; overflow: hidden; border-radius: 999px; background: #2a394c; }
+.explorer-download-status__track span { display: block; height: 100%; border-radius: inherit; background: #8ca6c8; transition: width .2s ease; }
+.explorer-download-status small { color: #8e9fb5; font-size: .72rem; }

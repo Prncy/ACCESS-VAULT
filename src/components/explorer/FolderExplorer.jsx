@@ -21,6 +21,7 @@ export default function FolderExplorer() {
   const [files, setFiles] = useState([]);
   const [progress, setProgress] = useState(null);
   const [workingFileId, setWorkingFileId] = useState(null);
+  const [downloadProgress, setDownloadProgress] = useState(null);
   const [sharing, setSharing] = useState(null);
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
@@ -128,14 +129,26 @@ export default function FolderExplorer() {
 
   async function onDownload(file) {
     setWorkingFileId(file.id);
+    setDownloadProgress({
+      name: file.name,
+      stage: 'preparing',
+      bytesDone: 0,
+      totalBytes: file.size,
+      chunksDone: 0,
+      totalChunks: 0,
+    });
     setError(null);
     try {
-      const { name: fileName, blob } = await downloadFile(file.id, currentId);
+      const { name: fileName, blob } = await downloadFile(file.id, currentId, {
+        onProgress: (next) => setDownloadProgress({ name: file.name, ...next }),
+      });
+      setDownloadProgress((current) => current ? { ...current, stage: 'saving' } : current);
       saveBlob(fileName, blob);
     } catch (err) {
       setError(err.message);
     } finally {
       setWorkingFileId(null);
+      setDownloadProgress(null);
     }
   }
 
@@ -251,6 +264,39 @@ export default function FolderExplorer() {
             Encrypting and uploading <strong>{progress.name}</strong> · {progress.done}/{progress.total} chunks
           </div>
         )}
+        {downloadProgress && (() => {
+          const percent = downloadProgress.stage === 'saving'
+            ? 100
+            : downloadProgress.totalBytes > 0
+              ? Math.min(100, Math.round((downloadProgress.bytesDone / downloadProgress.totalBytes) * 100))
+              : 0;
+          const message = downloadProgress.stage === 'preparing'
+            ? 'Preparing secure download…'
+            : downloadProgress.stage === 'decrypting'
+              ? 'Verifying and decrypting…'
+              : downloadProgress.stage === 'saving'
+                ? 'Download ready'
+                : 'Downloading…';
+          return (
+            <div className="explorer-download-status" role="status" aria-live="polite">
+              <div className="explorer-download-status__top">
+                <span><span className="spinner" aria-hidden="true" /> <strong>{message}</strong></span>
+                {downloadProgress.stage === 'downloading' && <strong>{percent}%</strong>}
+              </div>
+              <div className="explorer-download-status__name">{downloadProgress.name}</div>
+              <div className="explorer-download-status__track" role="progressbar" aria-label={message} aria-valuemin="0" aria-valuemax="100" aria-valuenow={downloadProgress.stage === 'decrypting' || downloadProgress.stage === 'saving' ? 100 : percent}>
+                <span style={{ width: `${downloadProgress.stage === 'decrypting' || downloadProgress.stage === 'saving' ? 100 : percent}%` }} />
+              </div>
+              <small>{downloadProgress.stage === 'preparing'
+                ? 'Getting the encrypted file and your key ready'
+                : downloadProgress.stage === 'decrypting'
+                  ? `Downloaded ${downloadProgress.chunksDone} of ${downloadProgress.totalChunks} chunks · Checking file integrity`
+                  : downloadProgress.stage === 'saving'
+                    ? 'Your browser is receiving the decrypted file'
+                    : `${formatSize(downloadProgress.bytesDone)} of ${formatSize(downloadProgress.totalBytes)} · ${downloadProgress.chunksDone} of ${downloadProgress.totalChunks} chunks`}</small>
+            </div>
+          );
+        })()}
         {showCreate && (
           <form className="explorer-create" onSubmit={onCreate} noValidate>
             <div className="explorer-create__copy"><strong>Create a folder</strong><span>Its name will be encrypted before it leaves your device.</span></div>
