@@ -315,9 +315,13 @@ export default function FolderExplorer() {
                   <span className="explorer-file-card__details"><strong>{file.name}</strong><small>{formatSize(file.size)} · Encrypted</small></span>
                 </div>
                 <div className="explorer-file-card__actions">
-                  <button type="button" className="explorer-icon-button" title="Download" aria-label={`Download ${file.name}`} disabled={workingFileId === file.id} onClick={() => onDownload(file)}>↓</button>
-                  <button type="button" className="explorer-icon-button is-danger" title="Delete" aria-label={`Delete ${file.name}`} disabled={workingFileId === file.id} onClick={() => onDelete(file)}>⌫</button>
-                  <details className="explorer-item-menu"><summary className="explorer-icon-button" aria-label={`More actions for ${file.name}`}>⋮</summary><div className="explorer-item-menu__panel"><button type="button" onClick={() => onDownload(file)}>Download</button><button type="button" className="is-danger" onClick={() => onDelete(file)}>Delete</button></div></details>
+                  <details className="explorer-item-menu">
+                    <summary className="explorer-icon-button" aria-label={`More actions for ${file.name}`} title="More options">⋮</summary>
+                    <div className="explorer-item-menu__panel">
+                      <button type="button" disabled={workingFileId === file.id} onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); onDownload(file); }}>Download</button>
+                      <button type="button" className="is-danger" disabled={workingFileId === file.id} onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); onDelete(file); }}>Delete</button>
+                    </div>
+                  </details>
                 </div>
               </article>
             ))}
