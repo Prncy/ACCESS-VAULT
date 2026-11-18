@@ -30,8 +30,7 @@ jobs:
       - name: Build React app
         run: npm run build
 
-      # GitHub Pages serves this file for unknown URLs. Reusing the built
-      # app lets React Router render the branded Not Found screen.
+      # Keep client-side routes working on direct visits and refreshes.
       - name: Add GitHub Pages SPA fallback
         run: cp dist/index.html dist/404.html
 
