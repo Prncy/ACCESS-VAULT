@@ -1,35 +1,29 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { authApi, USING_MOCK } from '../services/authApi.js';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { authApi } from '../services/authApi.js';
 import * as authFlow from '../services/authFlow.js';
 
+// authFlow.js is the crypto layer (keys, wrapping, vault folder). It talks to whichever backend
+// authApi.js picked (mock or Supabase). Pages and this context never touch keys or the password
+// beyond handing the password to authFlow.
 authFlow.configure({ backend: authApi });
+
+// Session lives in React state ONLY (Phase 2 rule: "keep the session in memory only").
+// Nothing is written to localStorage, sessionStorage or cookies, so a refresh or
+// closing the tab logs the user out and drops everything. The unwrapped private key and vault
+// key live in authFlow's own in-memory session, which logout() clears first.
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
-  const [pendingUnlock, setPendingUnlock] = useState(null);
-  const [isRestoring, setIsRestoring] = useState(!USING_MOCK);
+  // One-shot message shown by the next screen (e.g. "You have been signed out"). Memory only.
   const [notice, setNotice] = useState(null);
-
-  // Restore the Supabase identity only. Encryption keys are never restored from storage.
-  useEffect(() => {
-    let active = true;
-    authApi.getCurrentSession()
-      .then((restored) => {
-        if (active && restored) setPendingUnlock({ userId: restored.userId, email: restored.email });
-      })
-      .catch((error) => console.error('[auth] Could not restore the sign-in session', error))
-      .finally(() => { if (active) setIsRestoring(false); });
-    return () => { active = false; };
-  }, []);
 
   const register = useCallback(async ({ displayName, email, password }) => {
     const cleanEmail = email.trim();
     const cleanName = displayName.trim();
     const { userId } = await authFlow.register(cleanEmail, cleanName, password);
     setNotice(null);
-    setPendingUnlock(null);
     setSession({ userId, email: cleanEmail, displayName: cleanName, justRegistered: true });
   }, []);
 
@@ -37,31 +31,19 @@ export function AuthProvider({ children }) {
     const cleanEmail = email.trim();
     const { userId, displayName } = await authFlow.login(cleanEmail, password);
     setNotice(null);
-    setPendingUnlock(null);
     setSession({ userId, email: cleanEmail, displayName: displayName ?? null });
   }, []);
 
-  const unlock = useCallback(async ({ password }) => {
-    if (!pendingUnlock?.email) throw new Error('Please sign in again.');
-    const { userId, displayName } = await authFlow.login(pendingUnlock.email, password);
-    setNotice(null);
-    setPendingUnlock(null);
-    setSession({ userId, email: pendingUnlock.email, displayName: displayName ?? null });
-  }, [pendingUnlock]);
-
   const logout = useCallback(async () => {
-    await authFlow.logout();
+    await authFlow.logout(); // drops keys first, then ends the backend session; never throws
     setSession(null);
-    setPendingUnlock(null);
     setNotice('signed_out');
   }, []);
 
-  const value = useMemo(() => ({
-    session, pendingUnlock, isRestoring, notice,
-    isAuthenticated: session !== null,
-    isLocked: pendingUnlock !== null,
-    register, login, unlock, logout,
-  }), [session, pendingUnlock, isRestoring, notice, register, login, unlock, logout]);
+  const value = useMemo(
+    () => ({ session, notice, isAuthenticated: session !== null, register, login, logout }),
+    [session, notice, register, login, logout],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
