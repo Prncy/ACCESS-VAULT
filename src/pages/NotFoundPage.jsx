@@ -5,7 +5,7 @@ export default function NotFoundPage() {
   return (
     <main className="not-found">
       <header className="not-found__header">
-        <Link to="/vault" aria-label="Access Vault home">
+        <Link to="/login" aria-label="Access Vault login">
           <Logo />
         </Link>
       </header>
@@ -18,13 +18,13 @@ export default function NotFoundPage() {
           <span className="not-found__code">404</span>
         </div>
         <p className="not-found__eyebrow">PAGE NOT FOUND</p>
-        <h1 id="not-found-title">Looks like this file is missing.</h1>
+        <h1 id="not-found-title">Looks like this page is missing.</h1>
         <p className="not-found__description">
           The page you’re looking for may have moved, been renamed, or never existed.
           Your files are safe — this address just doesn’t lead anywhere.
         </p>
         <div className="not-found__actions">
-          <Link className="btn btn--primary" to="/vault">Return to my vault</Link>
+          <Link className="btn btn--primary" to="/login">Back to Login</Link>
           <button className="btn btn--ghost" type="button" onClick={() => window.history.back()}>
             Go back
           </button>
