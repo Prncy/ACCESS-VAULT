@@ -388,3 +388,11 @@ h1, h2 { line-height: 1.2; margin: 0; }
   .explorer-file-card__details strong { max-width: 45vw; }
   .explorer-file-card__actions .explorer-icon-button { width: 32px; height: 32px; }
 }
+
+
+/* On small screens, use the breadcrumb for folder navigation instead of
+   repeating the entire folder tree as a horizontal strip. */
+@media (max-width: 760px) {
+  .explorer-sidebar { display: none; }
+  .explorer-layout { grid-template-columns: 1fr; }
+}
