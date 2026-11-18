@@ -25,7 +25,7 @@ function UnlockRoute() {
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/vault" replace />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
       <Route path="/register" element={<PublicOnly><RegisterPage /></PublicOnly>} />
       <Route path="/unlock" element={<UnlockRoute />} />
