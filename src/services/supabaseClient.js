@@ -1,13 +1,5 @@
-// One shared Supabase client, created on first use.
-//
-// Lazy on purpose: in mock mode (VITE_USE_MOCK=true, and in the tests) nothing
-// here runs, so no Supabase URL or key is needed.
-//
-// persistSession: false keeps the session in memory only. Refreshing the page
-// signs you out, which is what the design wants (keys also live only in memory).
-// The key below is the PUBLISHABLE (anon) key. It is safe in the browser because
-// Row Level Security is the real boundary. Never put the service_role key here.
-
+// Supabase persists its managed sign-in session so refreshes can return to the lock screen.
+// The user's password and all unwrapped encryption keys remain memory-only.
 import { createClient } from '@supabase/supabase-js';
 
 let client = null;
@@ -25,7 +17,7 @@ export function getSupabase() {
   }
 
   client = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false },
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
   });
   return client;
 }
