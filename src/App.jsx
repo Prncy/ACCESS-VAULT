@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
-import NotFoundPage from './pages/NotFoundPage.jsx';
 import VaultPlaceholderPage from './pages/VaultPlaceholderPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
@@ -18,7 +17,7 @@ export default function App() {
       <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
       <Route path="/register" element={<PublicOnly><RegisterPage /></PublicOnly>} />
       <Route path="/vault" element={<ProtectedRoute><VaultPlaceholderPage /></ProtectedRoute>} />
-      <Route path="*" element={<NotFoundPage />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
