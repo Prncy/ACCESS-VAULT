@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { authApi } from '../services/authApi.js';
+import { authApi, USING_MOCK } from '../services/authApi.js';
 import * as authFlow from '../services/authFlow.js';
 
 authFlow.configure({ backend: authApi });
@@ -9,7 +9,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [pendingUnlock, setPendingUnlock] = useState(null);
-  const [isRestoring, setIsRestoring] = useState(true);
+  const [isRestoring, setIsRestoring] = useState(!USING_MOCK);
   const [notice, setNotice] = useState(null);
 
   // Restore the Supabase identity only. Encryption keys are never restored from storage.
