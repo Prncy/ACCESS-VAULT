@@ -16,7 +16,10 @@ export default function FolderExplorer() {
   const [vaultId, setVaultId] = useState(null);
   const [currentId, setCurrentId] = useState(null);
   const [name, setName] = useState('');
-  const [showCreate, setShowCreate] = useState(false);\n  const [renameTarget, setRenameTarget] = useState(null);\n  const [renameValue, setRenameValue] = useState('');\n  const [folderBusy, setFolderBusy] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [renameTarget, setRenameTarget] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [folderBusy, setFolderBusy] = useState(false);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [files, setFiles] = useState([]);
