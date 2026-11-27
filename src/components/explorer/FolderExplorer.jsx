@@ -343,9 +343,19 @@ export default function FolderExplorer() {
                 <button type="button" className="explorer-icon-button is-danger" title="Delete folder" disabled={folderBusy} onClick={() => onDeleteFolder(byId.get(currentId))}>⌫</button>
                 <label className="explorer-icon-button explorer-upload-trigger" title="Upload files">
                   <input type="file" multiple hidden onChange={onPickFiles} disabled={progress !== null} aria-label="Upload files to this folder" />
-                  <span aria-hidden="true">↑</span>
+                  <svg className="explorer-action-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5" />
+                    <path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" />
+                  </svg>
                 </label>
-                <button type="button" className="explorer-icon-button" title="Share this folder" aria-label={`Share ${byId.get(currentId)?.name ?? 'this folder'}`} onClick={() => setSharing(byId.get(currentId))}>↗</button>
+                <button type="button" className="explorer-icon-button" title="Share this folder" aria-label={`Share ${byId.get(currentId)?.name ?? 'this folder'}`} onClick={() => setSharing(byId.get(currentId))}>
+                  <svg className="explorer-action-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <path d="m8.7 10.6 6.6-4.2M8.7 13.4l6.6 4.2" />
+                  </svg>
+                </button>
               </>
             )}
             <button type="button" className="explorer-icon-button" title="New folder" aria-label="Create a new folder" onClick={() => setShowCreate((value) => !value)}>＋</button>
@@ -445,7 +455,14 @@ export default function FolderExplorer() {
                 </button>
                 <button type="button" className="explorer-icon-button" title={`Rename ${folder.name}`} disabled={folderBusy} onClick={() => { setRenameTarget(folder); setRenameValue(folder.name); }}>✎</button>
                 <button type="button" className="explorer-icon-button is-danger" title={`Delete ${folder.name}`} disabled={folderBusy} onClick={() => onDeleteFolder(folder)}>⌫</button>
-                <button type="button" className="explorer-icon-button explorer-folder-card__share" title={`Share ${folder.name}`} onClick={() => setSharing(folder)} aria-label={`Share ${folder.name}`}>↗</button>
+                <button type="button" className="explorer-icon-button explorer-folder-card__share" title={`Share ${folder.name}`} onClick={() => setSharing(folder)} aria-label={`Share ${folder.name}`}>
+                  <svg className="explorer-action-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <path d="m8.7 10.6 6.6-4.2M8.7 13.4l6.6 4.2" />
+                  </svg>
+                </button>
               </article>
             ))}
           </div>
