@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Alert from '../Alert.jsx';
 import Button from '../Button.jsx';
 import TextField from '../TextField.jsx';
-import { listShares, lookupRecipient, revokeShare, shareFolder } from '../../services/shareFlow.js';
+import { getMyFingerprint, listShares, lookupRecipient, revokeShare, shareFolder } from '../../services/shareFlow.js';
 
 /**
  * Share one folder read-only, and see/revoke who already has it.
@@ -17,6 +17,10 @@ export default function SharePanel({ folder, onClose }) {
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [days, setDays] = useState(''); // '' = no expiry
+  const [myFingerprint, setMyFingerprint] = useState(null);
+  const [showMyFingerprint, setShowMyFingerprint] = useState(false);
+  const [fingerprintLoading, setFingerprintLoading] = useState(false);
+  const [fingerprintError, setFingerprintError] = useState(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -30,6 +34,26 @@ export default function SharePanel({ folder, onClose }) {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  async function toggleMyFingerprint() {
+    if (showMyFingerprint) {
+      setShowMyFingerprint(false);
+      return;
+    }
+    setFingerprintError(null);
+    if (!myFingerprint) {
+      setFingerprintLoading(true);
+      try {
+        setMyFingerprint(await getMyFingerprint());
+      } catch (err) {
+        setFingerprintError(err.message);
+        setFingerprintLoading(false);
+        return;
+      }
+      setFingerprintLoading(false);
+    }
+    setShowMyFingerprint(true);
+  }
 
   async function run(action) {
     setBusy(true);
@@ -75,6 +99,20 @@ export default function SharePanel({ folder, onClose }) {
         <button type="button" className="explorer__folder" onClick={onClose}>Close</button>
       </div>
       <p className="share__hint">People you share with can view and download everything in this folder, including subfolders. They cannot change anything.</p>
+
+      <div className="share__own-fingerprint">
+        <div>
+          <strong>Your security fingerprint</strong>
+          <p className="share__hint">Let others compare this with the fingerprint shown when you look up their account.</p>
+        </div>
+        <Button variant="ghost" onClick={toggleMyFingerprint} loading={fingerprintLoading}>
+          {showMyFingerprint ? 'Hide fingerprint' : 'Show fingerprint'}
+        </Button>
+        {fingerprintError && <Alert variant="error">{fingerprintError}</Alert>}
+        {showMyFingerprint && myFingerprint && (
+          <p className="share__fingerprint-value"><code>{myFingerprint}</code></p>
+        )}
+      </div>
 
       {error && <Alert variant="error">{error}</Alert>}
       {notice && <Alert variant="success">{notice}</Alert>}
