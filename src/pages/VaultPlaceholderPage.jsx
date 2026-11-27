@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { USING_MOCK } from '../services/authApi.js';
 import FolderExplorer from '../components/explorer/FolderExplorer.jsx';
 import SharedWithMe from '../components/explorer/SharedWithMe.jsx';
+import Activity from '../components/audit/Activity.jsx';
 import Logo from '../components/Logo.jsx';
 import Alert from '../components/Alert.jsx';
 import Button from '../components/Button.jsx';
@@ -10,6 +11,8 @@ import Button from '../components/Button.jsx';
 export default function VaultPlaceholderPage() {
   const { session, logout } = useAuth();
   const [view, setView] = useState('mine');
+
+  const viewLabels = { mine: 'My vault', shared: 'Shared with me', activity: 'Activity' };
 
   return (
     <div className="vault vault--workspace">
@@ -30,17 +33,17 @@ export default function VaultPlaceholderPage() {
           <div className="vault-workspace-switcher-row">
             <details className="vault-workspace-switcher">
               <summary aria-label="Switch workspace">
-                <span className="vault-workspace-switcher__icon" aria-hidden="true">{view === 'mine' ? '▦' : '♧'}</span>
-                <span>{view === 'mine' ? 'My vault' : 'Shared with me'}</span>
+                <span className="vault-workspace-switcher__icon" aria-hidden="true">{view === 'mine' ? '▦' : view === 'shared' ? '♧' : '◷'}</span>
+                <span>{viewLabels[view]}</span>
                 <span className="vault-workspace-switcher__chevron" aria-hidden="true">⌄</span>
               </summary>
               <div className="vault-workspace-switcher__menu">
-                <button type="button" className={view === 'mine' ? 'is-active' : ''} onClick={(event) => { setView('mine'); event.currentTarget.closest('details')?.removeAttribute('open'); }}>
-                  <span aria-hidden="true">▦</span> My vault {view === 'mine' && <span className="vault-workspace-switcher__check">✓</span>}
-                </button>
-                <button type="button" className={view === 'shared' ? 'is-active' : ''} onClick={(event) => { setView('shared'); event.currentTarget.closest('details')?.removeAttribute('open'); }}>
-                  <span aria-hidden="true">♧</span> Shared with me {view === 'shared' && <span className="vault-workspace-switcher__check">✓</span>}
-                </button>
+                {Object.entries(viewLabels).map(([key, label]) => (
+                  <button key={key} type="button" className={view === key ? 'is-active' : ''} onClick={(event) => { setView(key); event.currentTarget.closest('details')?.removeAttribute('open'); }}>
+                    <span aria-hidden="true">{key === 'mine' ? '▦' : key === 'shared' ? '♧' : '◷'}</span> {label}
+                    {view === key && <span className="vault-workspace-switcher__check">✓</span>}
+                  </button>
+                ))}
               </div>
             </details>
           </div>
@@ -50,7 +53,7 @@ export default function VaultPlaceholderPage() {
               You are signed in against the built-in mock, not the real backend. Set VITE_USE_MOCK=false in .env.local to use Supabase.
             </Alert>
           )}
-          {view === 'mine' ? <FolderExplorer /> : <SharedWithMe />}
+          {view === 'mine' ? <FolderExplorer /> : view === 'shared' ? <SharedWithMe /> : <Activity />}
         </div>
       </main>
     </div>
