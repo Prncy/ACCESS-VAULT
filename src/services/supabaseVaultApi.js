@@ -13,10 +13,21 @@ import { ERROR_CODES } from "./contract.js";
 import { getSupabase } from "./supabaseClient.js";
 
 function fail(error) {
+  const raw = String(error?.message ?? "");
+  const friendly = [
+    ["not_found", "That folder no longer exists"],
+    ["cannot_delete_root", "The vault can't be deleted"],
+    ["cannot_rename_root", "The vault can't be renamed"],
+    ["invalid_name", "Enter a valid name"],
+  ].find(([token]) => raw.includes(token));
+  if (friendly) {
+    console.error("[supabase folder operation]", error);
+    return new ApiError(ERROR_CODES.INVALID_REQUEST, friendly[1], error?.status ?? 400);
+  }
   console.error("[supabase]", error);
   const network =
     error?.name === "AuthRetryableFetchError" ||
-    /failed to fetch|network/i.test(String(error?.message ?? ""));
+    /failed to fetch|network/i.test(raw);
   return network
     ? new ApiError(
         ERROR_CODES.NETWORK_ERROR,
