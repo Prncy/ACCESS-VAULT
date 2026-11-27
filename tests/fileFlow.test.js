@@ -27,7 +27,7 @@ beforeEach(async () => {
   authFlow.configure({ backend: mock });
   await authFlow.logout();
   await authFlow.register(EMAIL, 'Tester', PASSWORD);
-  vaultId = await getVaultFolderId();
+  vaultId = (await createSubfolder('Docs', await getVaultFolderId())).id; // uploads into the vault root are not allowed
 });
 
 describe('cleanFileName', () => {

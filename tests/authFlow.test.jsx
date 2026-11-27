@@ -20,6 +20,7 @@ beforeEach(() => {
   vi.setConfig({ testTimeout: 30000 });
   __resetMockAuth();
   __setMockLatency(0);
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
 });
 
 describe('Login screen', () => {
@@ -37,7 +38,7 @@ describe('Login screen', () => {
     await user.type(screen.getByLabelText('Email'), DEMO_USER.email);
     await user.type(screen.getByLabelText('Password'), DEMO_USER.password);
     await user.click(screen.getByRole('button', { name: /sign in/i }));
-    expect(await screen.findByText(/No folders here yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/No folders in this location yet/)).toBeInTheDocument();
   });
 
   it('shows one generic error for a wrong password', async () => {
@@ -55,23 +56,30 @@ describe('Login screen', () => {
   });
 });
 
+async function signInDemo(user) {
+  await user.type(screen.getByLabelText('Email'), DEMO_USER.email);
+  await user.type(screen.getByLabelText('Password'), DEMO_USER.password);
+  await user.click(screen.getByRole('button', { name: /sign in/i }));
+  await screen.findByText(/No folders in this location yet/);
+}
+
+async function createFolder(user, name) {
+  await user.click(screen.getByRole('button', { name: /create a new folder/i }));
+  await user.type(screen.getByLabelText('Folder name'), name);
+  await user.click(screen.getByRole('button', { name: 'Create' }));
+}
+
 describe('Folder explorer', () => {
   it('creates a folder, opens it, and creates one inside', async () => {
     const user = userEvent.setup();
     renderApp();
-    await user.type(screen.getByLabelText('Email'), DEMO_USER.email);
-    await user.type(screen.getByLabelText('Password'), DEMO_USER.password);
-    await user.click(screen.getByRole('button', { name: /sign in/i }));
-    await screen.findByText(/No folders here yet/);
+    await signInDemo(user);
 
-    await user.type(screen.getByLabelText('New folder name'), 'Notes');
-    await user.click(screen.getByRole('button', { name: /create folder/i }));
-    await user.click(await screen.findByRole('button', { name: 'Notes' }));
-
-    await user.type(screen.getByLabelText('New folder name'), 'Week 1');
-    await user.click(screen.getByRole('button', { name: /create folder/i }));
-    expect(await screen.findByRole('button', { name: 'Week 1' })).toBeInTheDocument();
-    expect(screen.getByRole('navigation', { name: /folder path/i })).toHaveTextContent('Vault / Notes');
+    await createFolder(user, 'Notes');
+    await user.click(await screen.findByRole('button', { name: 'Open Notes' }));
+    await createFolder(user, 'Week 1');
+    expect(await screen.findByRole('button', { name: 'Open Week 1' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: /folder path/i })).toHaveTextContent('Notes');
   });
 
   it('uploads an encrypted file, lists it, and downloads it back', async () => {
@@ -82,22 +90,19 @@ describe('Folder explorer', () => {
     HTMLAnchorElement.prototype.click = vi.fn();
 
     renderApp();
-    await user.type(screen.getByLabelText('Email'), DEMO_USER.email);
-    await user.type(screen.getByLabelText('Password'), DEMO_USER.password);
-    await user.click(screen.getByRole('button', { name: /sign in/i }));
-    await screen.findByText(/No folders here yet/);
+    await signInDemo(user);
+    await createFolder(user, 'Docs');
+    await user.click(await screen.findByRole('button', { name: 'Open Docs' }));
 
-    await user.upload(screen.getByLabelText('Upload files'), new File(['hello vault'], 'hello.txt', { type: 'text/plain' }));
-    const files = await screen.findByRole('list', { name: 'Files' });
-    expect(files).toHaveTextContent('hello.txt');
-
+    await user.upload(screen.getByLabelText('Upload files to this folder'), new File(['hello vault'], 'hello.txt', { type: 'text/plain' }));
+    await user.click(await screen.findByLabelText('More actions for hello.txt'));
     await user.click(screen.getByRole('button', { name: 'Download' }));
     await waitFor(() => expect(saved).toHaveLength(1));
     expect(saved[0].size).toBe('hello vault'.length);
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    await user.click(screen.getByLabelText('More actions for hello.txt'));
     await user.click(screen.getByRole('button', { name: 'Delete' }));
-    await waitFor(() => expect(screen.queryByRole('list', { name: 'Files' })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByLabelText('More actions for hello.txt')).not.toBeInTheDocument());
   });
 
   it('shares a folder from the UI with a fingerprint check, then revokes it', async () => {
@@ -108,12 +113,8 @@ describe('Folder explorer', () => {
     await authFlow.logout();
 
     renderApp();
-    await user.type(screen.getByLabelText('Email'), DEMO_USER.email);
-    await user.type(screen.getByLabelText('Password'), DEMO_USER.password);
-    await user.click(screen.getByRole('button', { name: /sign in/i }));
-    await screen.findByText(/No folders here yet/);
-    await user.type(screen.getByLabelText('New folder name'), 'Reports');
-    await user.click(screen.getByRole('button', { name: /create folder/i }));
+    await signInDemo(user);
+    await createFolder(user, 'Reports');
 
     await user.click(await screen.findByRole('button', { name: 'Share Reports' }));
     await user.type(screen.getByLabelText('Their email'), 'bob@test.co');
@@ -126,7 +127,6 @@ describe('Folder explorer', () => {
     expect(list).toHaveTextContent('Bob');
     expect(list).toHaveTextContent('until');
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     await user.click(screen.getByRole('button', { name: 'Revoke' }));
     expect(await screen.findByText('Nobody yet.')).toBeInTheDocument();
   });
@@ -134,12 +134,10 @@ describe('Folder explorer', () => {
   it('shows a friendly message for an empty name', async () => {
     const user = userEvent.setup();
     renderApp();
-    await user.type(screen.getByLabelText('Email'), DEMO_USER.email);
-    await user.type(screen.getByLabelText('Password'), DEMO_USER.password);
-    await user.click(screen.getByRole('button', { name: /sign in/i }));
-    await screen.findByText(/No folders here yet/);
-    await user.click(screen.getByRole('button', { name: /create folder/i }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Enter a folder name.');
+    await signInDemo(user);
+    await user.click(screen.getByRole('button', { name: /create a new folder/i }));
+    await user.click(screen.getByRole('button', { name: 'Create' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Enter a folder name/);
   });
 });
 
@@ -171,7 +169,7 @@ describe('Register screen', () => {
     await user.type(screen.getByLabelText('Email'), 'new@user.co');
     await user.type(screen.getByLabelText('Password'), 'a-long-test-password');
     await user.click(screen.getByRole('button', { name: /sign in/i }));
-    await waitFor(() => expect(screen.getByText(/No folders here yet/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/No folders in this location yet/)).toBeInTheDocument());
   });
 
   it('shows email_taken on the email field', async () => {
