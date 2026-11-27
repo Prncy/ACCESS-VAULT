@@ -421,3 +421,15 @@ h1, h2 { line-height: 1.2; margin: 0; }
 .inactivity-dialog__signout:hover { color: #fff; }
 .inactivity-dialog__button:focus-visible, .inactivity-dialog__signout:focus-visible { outline: 2px solid #a9ccff; outline-offset: 3px; }
 @media (max-width: 480px) { .inactivity-dialog { padding: 1.6rem 1.2rem 1.25rem; } }
+
+
+/* ---------- own fingerprint in share panel ---------- */
+.vault--workspace .share__own-fingerprint { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .65rem 1rem; margin: 1rem 0 1.35rem; padding: .9rem 1rem; border: 1px solid #344760; border-radius: 10px; background: #131e2b; }
+.vault--workspace .share__own-fingerprint strong { color: #e2ebf7; font-size: .84rem; }
+.vault--workspace .share__own-fingerprint .share__hint { margin: .25rem 0 0; font-size: .74rem; }
+.share__fingerprint-value { grid-column: 1 / -1; margin: 0; padding: .7rem .8rem; border: 1px solid #344760; border-radius: 7px; background: #0f1925; overflow-wrap: anywhere; }
+.share__fingerprint-value code { color: #c5dcfb; font-size: .82rem; letter-spacing: .07em; }
+@media (max-width: 480px) {
+  .vault--workspace .share__own-fingerprint { grid-template-columns: 1fr; }
+  .vault--workspace .share__own-fingerprint .btn { justify-self: start; }
+}
