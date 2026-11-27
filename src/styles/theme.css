@@ -42,3 +42,21 @@
   --font: 'Montserrat', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
 }
+
+/* Activity feed */
+.activity { max-width: 980px; margin: 0 auto; color: #e5edf8; }
+.activity__heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: .2rem 0 1.25rem; }
+.activity__intro { margin: .35rem 0 0; color: #8e9db2; font-size: .8rem; }
+.activity__refresh, .activity__load-more { border: 1px solid #344760; border-radius: 8px; padding: .55rem .85rem; background: #1b2b3f; color: #c8dcf7; font: inherit; font-size: .78rem; cursor: pointer; }
+.activity__refresh:disabled, .activity__load-more:disabled { opacity: .55; cursor: wait; }
+.activity__list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; border-top: 1px solid #29394d; }
+.activity__item { display: flex; gap: .8rem; padding: 1rem .2rem; border-bottom: 1px solid #29394d; }
+.activity__marker { color: #7faef0; font-size: 1.5rem; line-height: 1; }
+.activity__body { display: grid; gap: .22rem; min-width: 0; }
+.activity__body strong { color: #e5edf8; font-size: .84rem; }
+.activity__resource { color: #b8d2f5; font-size: .78rem; }
+.activity__body p, .activity__body time { margin: 0; color: #8293aa; font-size: .72rem; }
+.activity__empty { padding: 1.4rem; border: 1px dashed #34465e; border-radius: 10px; color: #91a1b7; font-size: .8rem; text-align: center; }
+.activity__error { padding: .75rem; border: 1px solid #74434a; border-radius: 8px; background: #321f28; color: #f0b4b4; font-size: .8rem; }
+.activity__load-more { display: block; margin: 1rem auto; min-width: 130px; }
+@media (max-width: 520px) { .activity__heading { align-items: flex-start; } }
