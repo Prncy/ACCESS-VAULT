@@ -47,7 +47,7 @@ export default function InactivityGuard({ onSignOut }) {
       } else {
         setSecondsLeft(null);
       }
-    }, 250);
+    }, 1000);
 
     return () => {
       window.clearInterval(intervalId);
