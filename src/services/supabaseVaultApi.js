@@ -1,12 +1,12 @@
 // Vault folder + key-grant calls used by authFlow.js. Everything stored here is ciphertext:
-// folder names are encrypted in the browser (nameEnc) and keys are wrapped to a recipient's
-// public key, so the database never sees a name or a key in the clear.
-//
-// Needs supabase/migrations/002_vault_folders_and_grants.sql. Row Level Security is the real
-// boundary: a signed-in user can only create folders they own and read keys addressed to them.
-//
-// Mapping to tables:  "folder"  -> public.folders       (name_enc, wrapped_key)
-//                     "grant"   -> public.key_envelopes (wrapped_key, ephemeral_public_key, role)
+ // folder names are encrypted in the browser (nameEnc) and keys are wrapped to a recipient's
+ // public key, so the database never sees a name or a key in the clear.
+ //
+ // Needs supabase/migrations/002_vault_folders_and_grants.sql. Row Level Security is the real
+ // boundary: a signed-in user can only create folders they own and read keys addressed to them.
+ //
+ // Mapping to tables:  "folder"  -> public.folders       (name_enc, wrapped_key)
+ //                     "grant"   -> public.key_envelopes (wrapped_key, ephemeral_public_key, role)
 
 import { ApiError } from "./apiClient.js";
 import { ERROR_CODES } from "./contract.js";
@@ -60,6 +60,35 @@ export async function createFolder({
     .single();
   if (error) throw fail(error);
   return { folderId: data.folder_id };
+}
+
+/** Returns file ids and chunk counts for the selected folder and its descendants. */
+export async function getFolderFiles(folderId) {
+  const { data, error } = await getSupabase().rpc("get_folder_files", {
+    p_folder_id: folderId,
+  });
+  if (error) throw fail(error);
+  return (data ?? []).map((row) => ({
+    fileId: row.file_id,
+    chunkCount: row.chunk_count,
+  }));
+}
+
+/** Calls the database function after the browser has removed all encrypted Storage chunks. */
+export async function deleteFolder(folderId) {
+  const { error } = await getSupabase().rpc("delete_folder", {
+    p_folder_id: folderId,
+  });
+  if (error) throw fail(error);
+}
+
+/** Updates only the encrypted folder name. */
+export async function renameFolder(folderId, nameEnc) {
+  const { error } = await getSupabase().rpc("rename_folder", {
+    p_folder_id: folderId,
+    p_name_enc: nameEnc,
+  });
+  if (error) throw fail(error);
 }
 
 /**
@@ -139,7 +168,6 @@ export async function getVault() {
     );
   if (envError) throw fail(envError);
 
-  // The oldest root that has a key for us. A root with no grant (registration died half way) is skipped.
   for (const root of roots) {
     const env = envelopes?.find((e) => e.resource_id === root.folder_id);
     if (env) {
