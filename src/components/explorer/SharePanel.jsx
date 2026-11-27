@@ -103,7 +103,7 @@ export default function SharePanel({ folder, onClose }) {
       <div className="share__own-fingerprint">
         <div>
           <strong>Your security fingerprint</strong>
-          <p className="share__hint">Let others compare this with the fingerprint shown when you look up their account.</p>
+          <p className="share__hint">If someone is sharing with you, show them this value so they can compare it with the fingerprint displayed for your account.</p>
         </div>
         <Button variant="ghost" onClick={toggleMyFingerprint} loading={fingerprintLoading}>
           {showMyFingerprint ? 'Hide fingerprint' : 'Show fingerprint'}
