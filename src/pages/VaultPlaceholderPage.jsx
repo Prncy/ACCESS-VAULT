@@ -7,6 +7,7 @@ import Activity from '../components/audit/Activity.jsx';
 import Logo from '../components/Logo.jsx';
 import Alert from '../components/Alert.jsx';
 import Button from '../components/Button.jsx';
+import InactivityGuard from '../components/InactivityGuard.jsx';
 
 export default function VaultPlaceholderPage() {
   const { session, logout } = useAuth();
@@ -16,6 +17,7 @@ export default function VaultPlaceholderPage() {
 
   return (
     <div className="vault vault--workspace">
+      <InactivityGuard onSignOut={logout} />
       <header className="vault__bar">
         <div className="vault__brand"><Logo /></div>
         <div className="vault__topbar-right">
