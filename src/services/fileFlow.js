@@ -299,6 +299,13 @@ export async function downloadFile(
       );
     }
   }
+  // Only record a download after every chunk has passed authenticated decryption.
+  try {
+    const { logAuditEvent } = await import('./auditService.js');
+    await logAuditEvent('DOWNLOAD', fileId, 'file');
+  } catch (err) {
+    console.warn('[audit] DOWNLOAD event could not be recorded', err);
+  }
   return { name, blob: new Blob(parts, { type: "application/octet-stream" }) };
 }
 
