@@ -194,6 +194,78 @@ export async function listFolders() {
     .map((f) => ({ id: f.folderId, parentId: f.parentId, nameEnc: f.nameEnc, wrappedKey: f.wrappedKey }));
 }
 
+// ---------- folder operations (mirror migration 008) ----------
+export async function getFolderFiles(folderId) {
+  await sleep(latencyMs);
+  const me = requireSignedIn();
+  const root = folders.find((x) => x.folderId === folderId && x.ownerId === me);
+  if (!root) throw new ApiError(ERROR_CODES.INVALID_REQUEST, "not_found", 404);
+  const ids = new Set([folderId]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const item of folders) {
+      if (ids.has(item.parentId) && !ids.has(item.folderId)) {
+        ids.add(item.folderId);
+        changed = true;
+      }
+    }
+  }
+  return files.filter((x) => ids.has(x.folderId)).map((x) => ({ fileId: x.fileId, chunkCount: x.chunkCount }));
+}
+
+export async function removeFolderFileChunks(fileIds) {
+  await sleep(latencyMs);
+  requireSignedIn();
+  const ids = new Set(fileIds || []);
+  for (const key of [...chunkStore.keys()]) {
+    const id = key.slice(0, key.lastIndexOf("/"));
+    if (ids.has(id)) chunkStore.delete(key);
+  }
+}
+
+export async function deleteFolder(folderId) {
+  await sleep(latencyMs);
+  const me = requireSignedIn();
+  const root = folders.find((x) => x.folderId === folderId && x.ownerId === me);
+  if (!root) throw new ApiError(ERROR_CODES.INVALID_REQUEST, "not_found", 404);
+  if (!root.parentId) throw new ApiError(ERROR_CODES.INVALID_REQUEST, "cannot_delete_root", 400);
+  const ids = new Set([folderId]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const item of folders) {
+      if (ids.has(item.parentId) && !ids.has(item.folderId)) {
+        ids.add(item.folderId);
+        changed = true;
+      }
+    }
+  }
+  const fileIds = new Set(files.filter((x) => ids.has(x.folderId)).map((x) => x.fileId));
+  for (let i = shares.length - 1; i >= 0; i--) {
+    if (ids.has(shares[i].resourceId) || fileIds.has(shares[i].resourceId)) shares.splice(i, 1);
+  }
+  for (let i = grants.length - 1; i >= 0; i--) {
+    if (ids.has(grants[i].resourceId) || fileIds.has(grants[i].resourceId)) grants.splice(i, 1);
+  }
+  for (let i = files.length - 1; i >= 0; i--) {
+    if (fileIds.has(files[i].fileId)) files.splice(i, 1);
+  }
+  for (let i = folders.length - 1; i >= 0; i--) {
+    if (ids.has(folders[i].folderId)) folders.splice(i, 1);
+  }
+}
+
+export async function renameFolder(folderId, nameEnc) {
+  await sleep(latencyMs);
+  const me = requireSignedIn();
+  const item = folders.find((x) => x.folderId === folderId && x.ownerId === me);
+  if (!item) throw new ApiError(ERROR_CODES.INVALID_REQUEST, "not_found", 404);
+  if (!item.parentId) throw new ApiError(ERROR_CODES.INVALID_REQUEST, "cannot_rename_root", 400);
+  if (!nameEnc || nameEnc.length > 2000) throw new ApiError(ERROR_CODES.INVALID_REQUEST, "invalid_name", 400);
+  item.nameEnc = nameEnc;
+}
+
 // ---------- file calls (mirror supabaseFilesApi.js) ----------
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // files.size check in the database
