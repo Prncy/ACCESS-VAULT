@@ -403,3 +403,21 @@ h1, h2 { line-height: 1.2; margin: 0; }
 .explorer-upload-trigger:focus-within,
 .explorer-icon-button:focus-visible,
 .explorer-folder-card__share:focus-visible { outline: 2px solid #8db6f5; outline-offset: 3px; }
+
+
+/* ---------- inactivity timeout warning ---------- */
+.inactivity-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 1rem; background: rgba(4, 9, 16, .82); backdrop-filter: blur(7px); }
+.inactivity-dialog { width: min(100%, 410px); display: grid; justify-items: center; padding: 2rem 1.6rem 1.5rem; border: 1px solid #344a67; border-radius: 18px; background: #172333; box-shadow: 0 24px 80px rgba(0,0,0,.55); color: #eaf1fb; text-align: center; }
+.inactivity-dialog__lock { width: 48px; height: 48px; display: grid; place-items: center; margin-bottom: .9rem; border: 1px solid #385779; border-radius: 50%; background: #203957; font-size: 1.2rem; }
+.inactivity-dialog__eyebrow { margin: 0 0 .45rem; color: #8fb7ed; font-size: .65rem; font-weight: 800; letter-spacing: .16em; }
+.inactivity-dialog h2 { margin: 0; color: #f4f7fc; font-size: 1.5rem; }
+.inactivity-dialog > p:not(.inactivity-dialog__eyebrow) { max-width: 300px; margin: .65rem 0 0; color: #a6b5c9; font-size: .84rem; line-height: 1.55; }
+.inactivity-countdown { width: 116px; height: 116px; display: grid; place-items: center; margin: 1.35rem 0 .3rem; border: 5px solid #477fca; border-radius: 50%; background: #122033; box-shadow: 0 0 0 7px rgba(71,127,202,.12), inset 0 0 24px rgba(71,127,202,.12); }
+.inactivity-countdown span { color: #f3f7ff; font-size: 2rem; font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.inactivity-dialog__hint { font-size: .72rem !important; }
+.inactivity-dialog__button { width: 100%; margin-top: 1.35rem; padding: .8rem 1rem; border: 1px solid #3478df; border-radius: 9px; background: #2468d8; color: white; font: inherit; font-size: .86rem; font-weight: 700; cursor: pointer; }
+.inactivity-dialog__button:hover { background: #347ce9; }
+.inactivity-dialog__signout { margin-top: .65rem; padding: .45rem .8rem; border: 0; background: transparent; color: #9eb0c8; font: inherit; font-size: .78rem; cursor: pointer; }
+.inactivity-dialog__signout:hover { color: #fff; }
+.inactivity-dialog__button:focus-visible, .inactivity-dialog__signout:focus-visible { outline: 2px solid #a9ccff; outline-offset: 3px; }
+@media (max-width: 480px) { .inactivity-dialog { padding: 1.6rem 1.2rem 1.25rem; } }
