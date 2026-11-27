@@ -28,7 +28,14 @@ jobs:
         run: npm ci
 
       - name: Build React app
-        run: npm run build
+        env:
+          VITE_USE_MOCK: "false"
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          test -n "$VITE_SUPABASE_URL" || (echo "Missing GitHub Actions variable: VITE_SUPABASE_URL" && exit 1)
+          test -n "$VITE_SUPABASE_PUBLISHABLE_KEY" || (echo "Missing GitHub Actions variable: VITE_SUPABASE_PUBLISHABLE_KEY" && exit 1)
+          npm run build
 
       # Keep client-side routes working on direct visits and refreshes.
       - name: Add GitHub Pages SPA fallback
