@@ -3,7 +3,7 @@ import Alert from '../Alert.jsx';
 import Button from '../Button.jsx';
 import TextField from '../TextField.jsx';
 import SharePanel from './SharePanel.jsx';
-import { FOLDER_NAME_MAX, createSubfolder, getVaultFolderId, listFolders } from '../../services/folderFlow.js';
+import { FOLDER_NAME_MAX, createSubfolder, deleteSubfolder, getVaultFolderId, listFolders, renameSubfolder } from '../../services/folderFlow.js';
 import { formatSize, saveBlob } from '../../utils/format.js';
 import { MAX_FILE_BYTES, deleteFile, downloadFile, listFiles, uploadFile } from '../../services/fileFlow.js';
 
@@ -15,7 +15,7 @@ export default function FolderExplorer() {
   const [vaultId, setVaultId] = useState(null);
   const [currentId, setCurrentId] = useState(null);
   const [name, setName] = useState('');
-  const [showCreate, setShowCreate] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);\n  const [renameTarget, setRenameTarget] = useState(null);\n  const [renameValue, setRenameValue] = useState('');\n  const [folderBusy, setFolderBusy] = useState(false);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [files, setFiles] = useState([]);
@@ -97,6 +97,85 @@ export default function FolderExplorer() {
       setError(err.message);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onRenameSubmit(event) {
+    event.preventDefault();
+    if (!renameTarget || folderBusy) return;
+    const clean = renameValue.trim();
+    if (!clean || clean.length > FOLDER_NAME_MAX || /[\\\\/]/.test(clean)) {
+      setError('Enter a valid folder name.');
+      return;
+    }
+    const duplicate = (folders ?? []).some((folder) =>
+      folder.id !== renameTarget.id &&
+      folder.parentId === renameTarget.parentId &&
+      folder.name.toLocaleLowerCase() === clean.toLocaleLowerCase()
+    );
+    if (duplicate) {
+      setError('A folder with that name already exists here.');
+      return;
+    }
+    setFolderBusy(true);
+    setError(null);
+    try {
+      await renameSubfolder(renameTarget.id, clean);
+      setFolders((current) => current.map((folder) =>
+        folder.id === renameTarget.id ? { ...folder, name: clean } : folder
+      ));
+      setRenameTarget(null);
+      setRenameValue('');
+    } catch (err) {
+      console.error('[FolderExplorer] rename failed', err);
+      setError(err.message || 'Could not rename folder. Please try again.');
+    } finally {
+      setFolderBusy(false);
+    }
+  }
+
+  async function onDeleteFolder(folder) {
+    if (folderBusy) return;
+    const descendants = new Set([folder.id]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const item of folders ?? []) {
+        if (descendants.has(item.parentId) && !descendants.has(item.id)) {
+          descendants.add(item.id);
+          changed = true;
+        }
+      }
+    }
+    let fileCount = 0;
+    try {
+      const preview = await (await import('../../services/authFlow.js')).getBackend().getFolderFiles(folder.id);
+      fileCount = preview.length;
+    } catch (err) {
+      console.error('[FolderExplorer] deletion preview failed', err);
+      setError(err.message || 'Could not prepare folder deletion. Please try again.');
+      return;
+    }
+    const childFolderCount = Math.max(0, descendants.size - 1);
+    const sharedWarning = ' People you shared this with will lose access.';
+    const confirmed = window.confirm(
+      `Permanently delete "${folder.name}"? This includes ${childFolderCount} subfolder(s) and ${fileCount} file(s). This cannot be undone.${sharedWarning}`
+    );
+    if (!confirmed) return;
+
+    setFolderBusy(true);
+    setError(null);
+    try {
+      const result = await deleteSubfolder(folder.id);
+      setFolders((current) => (current ?? []).filter((item) => !result.folderIds.includes(item.id)));
+      if (result.folderIds.includes(currentId)) setCurrentId(result.parentId);
+      setSharing(null);
+      setSelectedFileIds([]);
+    } catch (err) {
+      console.error('[FolderExplorer] delete failed', err);
+      setError('Couldn\'t delete, try again.');
+    } finally {
+      setFolderBusy(false);
     }
   }
 
@@ -246,6 +325,8 @@ export default function FolderExplorer() {
           <div className="explorer-heading__actions">
             {!atRoot && (
               <>
+                <button type="button" className="explorer-icon-button" title="Rename folder" disabled={folderBusy} onClick={() => { setRenameTarget(byId.get(currentId)); setRenameValue(byId.get(currentId)?.name ?? ''); }}>✎</button>
+                <button type="button" className="explorer-icon-button is-danger" title="Delete folder" disabled={folderBusy} onClick={() => onDeleteFolder(byId.get(currentId))}>⌫</button>
                 <label className="explorer-icon-button explorer-upload-trigger" title="Upload files">
                   <input type="file" multiple hidden onChange={onPickFiles} disabled={progress !== null} aria-label="Upload files to this folder" />
                   <span aria-hidden="true">↑</span>
@@ -258,6 +339,15 @@ export default function FolderExplorer() {
         </div>
 
         {error && <Alert variant="error">{error}</Alert>}
+        {folderBusy && <div className="explorer-upload-status" role="status"><span className="spinner" aria-hidden="true" /> Updating folder…</div>}
+        {renameTarget && (
+          <form className="explorer-create" onSubmit={onRenameSubmit} noValidate>
+            <div className="explorer-create__copy"><strong>Rename folder</strong><span>The new name will be encrypted on this device.</span></div>
+            <TextField label="Folder name" value={renameValue} maxLength={FOLDER_NAME_MAX} onChange={(event) => setRenameValue(event.target.value)} autoComplete="off" />
+            <Button type="submit" loading={folderBusy}>Save</Button>
+            <Button type="button" variant="ghost" disabled={folderBusy} onClick={() => { setRenameTarget(null); setRenameValue(''); }}>Cancel</Button>
+          </form>
+        )}
         {progress && (
           <div className="explorer-upload-status" role="status">
             <span className="spinner" aria-hidden="true" />
@@ -339,6 +429,8 @@ export default function FolderExplorer() {
                   <span className="explorer-folder-card__name">{folder.name}</span>
                   <span className="explorer-folder-card__meta">Encrypted folder</span>
                 </button>
+                <button type="button" className="explorer-icon-button" title={`Rename ${folder.name}`} disabled={folderBusy} onClick={() => { setRenameTarget(folder); setRenameValue(folder.name); }}>✎</button>
+                <button type="button" className="explorer-icon-button is-danger" title={`Delete ${folder.name}`} disabled={folderBusy} onClick={() => onDeleteFolder(folder)}>⌫</button>
                 <button type="button" className="explorer-icon-button explorer-folder-card__share" title={`Share ${folder.name}`} onClick={() => setSharing(folder)} aria-label={`Share ${folder.name}`}>↗</button>
               </article>
             ))}
