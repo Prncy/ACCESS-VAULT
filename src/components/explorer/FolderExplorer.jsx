@@ -6,6 +6,7 @@ import SharePanel from './SharePanel.jsx';
 import { FOLDER_NAME_MAX, createSubfolder, deleteSubfolder, getVaultFolderId, listFolders, renameSubfolder } from '../../services/folderFlow.js';
 import { formatSize, saveBlob } from '../../utils/format.js';
 import { MAX_FILE_BYTES, deleteFile, downloadFile, listFiles, uploadFile } from '../../services/fileFlow.js';
+import { getBackend } from '../../services/authFlow.js';
 
 const dateValue = (value) => value ? new Date(value).getTime() : 0;
 
@@ -149,7 +150,7 @@ export default function FolderExplorer() {
     }
     let fileCount = 0;
     try {
-      const preview = await (await import('../../services/authFlow.js')).getBackend().getFolderFiles(folder.id);
+      const preview = await getBackend().getFolderFiles(folder.id);
       fileCount = preview.length;
     } catch (err) {
       console.error('[FolderExplorer] deletion preview failed', err);
@@ -157,7 +158,17 @@ export default function FolderExplorer() {
       return;
     }
     const childFolderCount = Math.max(0, descendants.size - 1);
-    const sharedWarning = ' People you shared this with will lose access.';
+    let sharedWarning = '';
+    try {
+      const sharesByFolder = await Promise.all([...descendants].map((id) => getBackend().listShares(id)));
+      if (sharesByFolder.some((list) => list.length > 0)) {
+        sharedWarning = ' People you shared this with will lose access.';
+      }
+    } catch (err) {
+      console.error('[FolderExplorer] share preview failed', err);
+      setError('Could not check sharing before deletion. Please try again.');
+      return;
+    }
     const confirmed = window.confirm(
       `Permanently delete "${folder.name}"? This includes ${childFolderCount} subfolder(s) and ${fileCount} file(s). This cannot be undone.${sharedWarning}`
     );
