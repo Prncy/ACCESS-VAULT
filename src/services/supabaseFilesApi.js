@@ -146,6 +146,30 @@ export async function downloadChunk({ fileId, index }) {
   return new Uint8Array(await data.arrayBuffer());
 }
 
+/**
+ * Removes only the Storage objects for a batch of files. The folder-delete RPC removes
+ * file_chunks and files afterwards. If this fails, callers must NOT invoke delete_folder.
+ */
+export async function removeFolderFileChunks(fileIds) {
+  if (!Array.isArray(fileIds) || fileIds.length === 0) return;
+  const supabase = getSupabase();
+  const { data: chunks, error: listError } = await supabase
+    .from("file_chunks")
+    .select("storage_ref")
+    .in("file_id", fileIds);
+  if (listError) throw fail(listError);
+  const paths = [...new Set((chunks ?? []).map((chunk) => chunk.storage_ref).filter(Boolean))];
+  if (!paths.length) return;
+
+  // Supabase Storage remove accepts a list; chunk it to avoid request-size limits.
+  for (let index = 0; index < paths.length; index += 100) {
+    const { error } = await supabase.storage
+      .from(BUCKET)
+      .remove(paths.slice(index, index + 100));
+    if (error) throw fail(error);
+  }
+}
+
 /** Deletes the stored chunks, the chunk rows and the file row. Safe to call on a half-finished upload. */
 export async function deleteFile(fileId) {
   const supabase = getSupabase();
