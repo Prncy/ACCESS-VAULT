@@ -397,3 +397,9 @@ h1, h2 { line-height: 1.2; margin: 0; }
   .explorer-layout { grid-template-columns: 1fr; }
 }
 
+/* Consistent line icons for upload and sharing actions */
+.explorer-action-icon { width: 19px; height: 19px; display: block; flex: 0 0 auto; }
+.explorer-folder-card__share .explorer-action-icon { width: 17px; height: 17px; }
+.explorer-upload-trigger:focus-within,
+.explorer-icon-button:focus-visible,
+.explorer-folder-card__share:focus-visible { outline: 2px solid #8db6f5; outline-offset: 3px; }
