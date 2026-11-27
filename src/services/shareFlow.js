@@ -46,6 +46,12 @@ export async function fingerprint(publicKeyBase64) {
     .replace(/(.{4})(?=.)/g, "$1 ");
 }
 
+/** Returns the signed-in user's own public-key fingerprint for identity verification. */
+export async function getMyFingerprint() {
+  const session = signedIn();
+  return fingerprint(session.publicKey);
+}
+
 /** Finds a recipient by email. Returns { userId, name, publicKey, fingerprint }. */
 export async function lookupRecipient(rawEmail) {
   signedIn();
