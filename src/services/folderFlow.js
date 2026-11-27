@@ -138,3 +138,65 @@ export async function getFolderKey(folderId) {
   if (!key) throw new ApiError(ERROR_CODES.INVALID_REQUEST, 'That folder could not be found.', 404);
   return key;
 }
+
+
+/** Rename an owned subfolder. The folder name is encrypted with that folder's own key. */
+export async function renameSubfolder(folderId, rawName) {
+  const name = cleanFolderName(rawName);
+  const session = await readySession();
+  if (folderId === session.vaultFolderId) {
+    throw new ApiError(ERROR_CODES.INVALID_REQUEST, "The vault can't be renamed.", 400);
+  }
+  if (!session.folderKeys.get(folderId)) await listFolders();
+  const folderKey = session.folderKeys.get(folderId);
+  if (!folderKey) throw new ApiError(ERROR_CODES.INVALID_REQUEST, "That folder no longer exists", 404);
+
+  const encrypted = await encryptMetadata(folderKey, name);
+  await getBackend().renameFolder(folderId, packBlob(encrypted.iv, encrypted.ciphertext));
+  return { id: folderId, name };
+}
+
+/**
+ * Permanently delete an owned folder tree.
+ * Storage objects are removed first; the database RPC is called only if that succeeds.
+ * The returned ids let the page update its decrypted tree and navigation state.
+ */
+export async function deleteSubfolder(folderId) {
+  const session = await readySession();
+  if (folderId === session.vaultFolderId) {
+    throw new ApiError(ERROR_CODES.INVALID_REQUEST, "The vault can't be deleted", 400);
+  }
+
+  const tree = await listFolders();
+  const selected = tree.find((folder) => folder.id === folderId);
+  if (!selected || selected.parentId === null) {
+    throw new ApiError(ERROR_CODES.INVALID_REQUEST, "That folder no longer exists", 404);
+  }
+
+  const descendants = new Set([folderId]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const folder of tree) {
+      if (folder.parentId && descendants.has(folder.parentId) && !descendants.has(folder.id)) {
+        descendants.add(folder.id);
+        changed = true;
+      }
+    }
+  }
+
+  const files = await getBackend().getFolderFiles(folderId);
+  const fileIds = files.map((file) => file.fileId);
+
+  // Do not proceed to the database deletion if any Storage removal fails.
+  await getBackend().removeFolderFileChunks(fileIds);
+  await getBackend().deleteFolder(folderId);
+
+  for (const id of descendants) session.folderKeys.delete(id);
+  return {
+    folderIds: [...descendants],
+    fileIds,
+    fileCount: files.length,
+    parentId: selected.parentId,
+  };
+}
