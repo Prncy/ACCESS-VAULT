@@ -15,6 +15,11 @@ export default function VaultPlaceholderPage() {
 
   const viewLabels = { mine: 'My vault', shared: 'Shared with me', activity: 'Activity' };
 
+  const handleSignOut = () => {
+    const confirmed = window.confirm('Are you sure you want to sign out?');
+    if (confirmed) logout();
+  };
+
   return (
     <div className="vault vault--workspace">
       <InactivityGuard onSignOut={logout} />
@@ -25,7 +30,7 @@ export default function VaultPlaceholderPage() {
           <div className="vault__user">
             <span className="vault__avatar" aria-hidden="true">{(session.displayName ?? session.email ?? 'U').slice(0, 1).toUpperCase()}</span>
             <span className="vault__identity"><strong>{session.displayName ?? 'Your account'}</strong><small>{session.email}</small></span>
-            <Button variant="ghost" onClick={logout}>Sign out</Button>
+            <Button variant="ghost" onClick={handleSignOut}>Sign out</Button>
           </div>
         </div>
       </header>
